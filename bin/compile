@@ -1,0 +1,21 @@
+#!/bin/bash
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+BUILDPACK_DIR=`cd $(dirname $0); cd ..; pwd`
+
+[ "$BUILDPACK_DEBUG" = "true" ] && set -x
+
+echo "Downloading APT Buildpack"
+
+tmpdir=$(mktemp -d /tmp/apt-buildpack-XXX)
+curl -L https://github.com/Scalingo/apt-buildpack/archive/refs/heads/feature/custom-aptfile.tar.gz | tar -C $tmpdir --strip 1 -xzvf -
+
+echo "Installing custom packages"
+
+export APT_FILE_MANIFEST=Aptfile-custom-buildpack
+cp "${BUILDPACK_DIR}/Aptfile" "${BUILD_DIR}/${APT_FILE_MANIFEST}"
+$tmpdir/bin/compile "$BUILD_DIR" "$CACHE_DIR" "$ENV_DIR"
+
+rm -rf $tmpdir
